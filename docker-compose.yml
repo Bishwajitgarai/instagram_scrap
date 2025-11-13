@@ -1,0 +1,21 @@
+services:
+  instagram-scraper:
+    build: .
+    ports:
+      - "9010:9010"
+    environment:
+      - INSTAGRAM_USERNAME=${INSTAGRAM_USERNAME}
+      - INSTAGRAM_PASSWORD=${INSTAGRAM_PASSWORD}
+      - HEADLESS=${HEADLESS}
+    volumes:
+      - instagram_data:/app/instagram_profile
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9010/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  instagram_data:
