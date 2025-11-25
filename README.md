@@ -87,6 +87,35 @@ uv run uvicorn main:app --host 0.0.0.0 --port 9010 --reload
 
 The API will be available at `http://localhost:9010`.
 
+### Running with Docker
+
+You can also run the application using Docker.
+
+#### Using Docker Compose (Recommended)
+
+1.  Ensure you have Docker and Docker Compose installed.
+2.  Run the application:
+
+    ```bash
+    docker-compose up --build
+    ```
+
+The API will be available at `http://localhost:9010`.
+
+#### Manual Docker Build
+
+1.  Build the image:
+
+    ```bash
+    docker build -t instagram-scrap .
+    ```
+
+2.  Run the container:
+
+    ```bash
+    docker run -p 9010:9010 --env-file .env instagram-scrap
+    ```
+
 ### API Documentation
 
 Once the server is running, you can access the interactive API documentation (Swagger UI) at:
