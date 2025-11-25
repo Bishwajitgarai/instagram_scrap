@@ -10,4 +10,10 @@ wheels/
 .venv
 .env
 instagram_profile/
+
+# Editor directories and files
+.idea/
+.vscode/
+*.swp
+*.swo
 uv.lock
