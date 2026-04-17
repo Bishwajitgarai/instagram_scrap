@@ -63,14 +63,14 @@ async def scrape_user_reels(username: str, top_reels_count: Optional[int] = sett
                         original_post_data = call.get('request', {}).get('post_data', '')
                         
                         if not original_post_data:
-                            print("❌ No original post data found for pagination")
+                            print("No original post data found for pagination")
                             break
                         
                         # Parse the original form data to get all required parameters
                         try:
                             parsed_data = parse_qs(original_post_data)
                         except Exception as e:
-                            print(f"❌ Error parsing post data: {e}")
+                            print(f"Error parsing post data: {e}")
                             break
                         
                         # Update only the variables parameter with new cursor and page size
@@ -107,7 +107,7 @@ async def scrape_user_reels(username: str, top_reels_count: Optional[int] = sett
                             for cookie in browser_cookies:
                                 cookies[cookie['name']] = cookie['value']
                         except Exception as e:
-                            print(f"⚠️ Error getting cookies: {e}")
+                            print(f"Error getting cookies: {e}")
                             # Fallback to cookies from request headers
                             cookie_header = call.get('request', {}).get('headers', {}).get('cookie', '')
                             if cookie_header:
@@ -120,7 +120,7 @@ async def scrape_user_reels(username: str, top_reels_count: Optional[int] = sett
                         essential_cookies = ['csrftoken', 'sessionid']
                         missing_cookies = [c for c in essential_cookies if c not in cookies]
                         if missing_cookies:
-                            print(f"⚠️ Missing essential cookies: {missing_cookies}")
+                            print(f"Missing essential cookies: {missing_cookies}")
                         
                         async with httpx.AsyncClient() as client:
                             # Use the exact same headers from the original request
@@ -150,12 +150,12 @@ async def scrape_user_reels(username: str, top_reels_count: Optional[int] = sett
                                 timeout=30.0
                             )
                             
-                            print(f"🔍 Pagination request #{iteration}: cursor={current_cursor}, remaining={remaining_count}")
+                            print(f"Pagination request #{iteration}: cursor={current_cursor}, remaining={remaining_count}")
                             try:
                                 resp = await client.send(request)
                                 resp.raise_for_status()
                             except Exception as e:
-                                print(f"❌ HTTP request failed: {e}")
+                                print(f"HTTP request failed: {e}")
                                 break
 
                         try:
@@ -163,11 +163,11 @@ async def scrape_user_reels(username: str, top_reels_count: Optional[int] = sett
                             
                             # Check for errors
                             if 'errors' in resp_json:
-                                print(f"❌ GraphQL error: {resp_json['errors']}")
+                                print(f"GraphQL error: {resp_json['errors']}")
                                 break
                             
                             if 'data' not in resp_json:
-                                print(f"❌ No data in response: {resp_json}")
+                                print(f"No data in response: {resp_json}")
                                 break
                                 
                             edges = resp_json.get("data", {}).get("xdt_api__v1__clips__user__connection_v2", {}).get("edges", [])
@@ -175,7 +175,7 @@ async def scrape_user_reels(username: str, top_reels_count: Optional[int] = sett
                             has_next_page = page_info.get("has_next_page", False)
                             end_cursor = page_info.get("end_cursor")
 
-                            print(f"✅ Got {len(edges)} reels, has_next_page: {has_next_page}")
+                            print(f"Got {len(edges)} reels, has_next_page: {has_next_page}")
 
                             # Add edges to paginated media
                             for edge in edges:
@@ -185,18 +185,18 @@ async def scrape_user_reels(username: str, top_reels_count: Optional[int] = sett
                                 remaining_count -= 1
 
                             if not has_next_page or not end_cursor:
-                                print("ℹ️ No more pages available")
+                                print("No more pages available")
                                 break
 
                             current_cursor = end_cursor
                             await asyncio.sleep(1)  # Small delay between requests
 
                         except json.JSONDecodeError as e:
-                            print(f"❌ JSON decode error: {e}")
+                            print(f"JSON decode error: {e}")
                             print(f"Response text: {resp.text[:500]}")
                             break
                         except Exception as e:
-                            print(f"❌ Error parsing reels response: {e}")
+                            print(f"Error parsing reels response: {e}")
                             break
 
                     # Update the original call with paginated data
