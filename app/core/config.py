@@ -1,6 +1,6 @@
 import os
 from typing import List, Optional
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -13,10 +13,14 @@ class Settings(BaseSettings):
     
     # Browser settings
     HEADLESS: bool = Field(True, env="HEADLESS")
-    USER_DATA_DIR: str = Field(
-        "/tmp/instagram_profile" if os.environ.get("VERCEL") else "./instagram_profile", 
-        env="USER_DATA_DIR"
-    )
+    USER_DATA_DIR: str = Field("./instagram_profile", env="USER_DATA_DIR")
+    
+    @field_validator("USER_DATA_DIR", mode="after")
+    @classmethod
+    def force_tmp_on_vercel(cls, v: str) -> str:
+        if os.environ.get("VERCEL") or os.environ.get("VERCEL_ENV"):
+            return "/tmp/instagram_profile"
+        return v
     
     # Browser configuration
     BROWSER_TIMEOUT: int = Field(60000, env="BROWSER_TIMEOUT")
