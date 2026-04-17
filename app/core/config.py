@@ -13,7 +13,10 @@ class Settings(BaseSettings):
     
     # Browser settings
     HEADLESS: bool = Field(True, env="HEADLESS")
-    USER_DATA_DIR: str = Field("./instagram_profile", env="USER_DATA_DIR")
+    USER_DATA_DIR: str = Field(
+        "/tmp/instagram_profile" if os.environ.get("VERCEL") else "./instagram_profile", 
+        env="USER_DATA_DIR"
+    )
     
     # Browser configuration
     BROWSER_TIMEOUT: int = Field(60000, env="BROWSER_TIMEOUT")
