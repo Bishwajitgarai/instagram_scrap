@@ -107,43 +107,105 @@ class InstagramScraper:
             return False
 
     async def redirect(self, url: str, **kwargs):
-        """Fetch profile data via GraphQL to mimic the old redirect/interception logic"""
+        """
+        Fetch profile data via a multi-stage GraphQL sequence to mimic 
+        the data captured by a real browser render.
+        """
         if not self.is_initialized:
             await self.initialize()
 
         username = url.strip("/").split("/")[-1]
-        print(f"🎯 Scraping profile via API: {username}")
+        print(f"🎯 Creating Virtual Browser session for: {username}")
 
-        api_url = f"https://www.instagram.com/api/v1/users/web_profile_info/?username={username}"
-        
-        # Mimic graphql calls structure for compatibility with user.py
         result = {
             "url": url,
             "graphql_calls": [],
             "navigation_success": False,
-            "page_content_preview": "",
+            "page_content_preview": f"<html><body>Virtual Render for {username}</body></html>",
             "scraped_at": time.time()
         }
 
         try:
-            resp = await self.client.get(api_url)
-            if resp.status_code == 200:
-                data = resp.json()
-                result["graphql_calls"].append({
-                    "url": api_url,
-                    "response_body": data
-                })
-                result["navigation_success"] = True
-                print(f"✅ Successfully fetched profile data for {username}")
-            else:
+            # 1. Stage 1: Fetch Base Profile Info
+            print(f"📡 Stage 1: Fetching Profile Meta for {username}...")
+            profile_url = f"https://www.instagram.com/api/v1/users/web_profile_info/?username={username}"
+            resp = await self.client.get(profile_url)
+            
+            if resp.status_code != 200:
                 print(f"❌ Failed to fetch profile: {resp.status_code}")
+                return result
+
+            profile_data = resp.json()
+            result["graphql_calls"].append({
+                "url": profile_url,
+                "response_body": profile_data
+            })
+            result["navigation_success"] = True
+            
+            user_id = profile_data.get("data", {}).get("user", {}).get("id")
+            if not user_id:
+                print("⚠️ Could not find user_id in profile data")
+                return result
+
+            # 2. Stage 2: Fetch Reels/Clips (Capturing "after render" behavior)
+            print(f"📡 Stage 2: Fetching Reels for user_id {user_id}...")
+            reels_url = "https://www.instagram.com/graphql/query/"
+            reels_vars = {
+                "count": 12,
+                "target_user_id": user_id,
+                "include_grid_info": True
+            }
+            # Latest doc_id for clips_user_clips_graphql
+            reels_data = await self._fetch_graphql("7033737073356019", reels_vars)
+            if reels_data:
+                result["graphql_calls"].append({
+                    "url": reels_url + "?query_hash=clips_reels",
+                    "response_body": reels_data
+                })
+
+            # 3. Stage 3: Fetch Timeline/Posts
+            print(f"📡 Stage 3: Fetching Timeline for user_id {user_id}...")
+            timeline_vars = {
+                "id": user_id,
+                "first": 12
+            }
+            # Latest doc_id for edge_owner_to_timeline_media
+            timeline_data = await self._fetch_graphql("7238241892874114", timeline_vars)
+            if timeline_data:
+                result["graphql_calls"].append({
+                    "url": reels_url + "?query_hash=timeline_media",
+                    "response_body": timeline_data
+                })
+
+            print(f"✅ Virtual Rendering complete. Captured {len(result['graphql_calls'])} GraphQL calls.")
+
         except Exception as e:
-            print(f"❌ Error during API request: {e}")
+            print(f"❌ Error during Virtual Browser session: {e}")
 
         return result
 
+    async def _fetch_graphql(self, doc_id: str, variables: Dict) -> Optional[Dict]:
+        """Helper to perform internal Instagram GraphQL queries"""
+        try:
+            url = "https://www.instagram.com/graphql/query/"
+            data = {
+                "doc_id": doc_id,
+                "variables": json.dumps(variables)
+            }
+            headers = {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "X-CSRFToken": self.client.cookies.get("csrftoken") or "",
+            }
+            resp = await self.client.post(url, data=data, headers=headers)
+            if resp.status_code == 200:
+                return resp.json()
+            return None
+        except Exception as e:
+            print(f"⚠️ GraphQL query {doc_id} failed: {e}")
+            return None
+
     async def scrape_user_reels_by_username(self, username: str, **kwargs):
-        """To be implemented if needed, can reuse redirect for now"""
+        """Reuse redirect logic which now captures Reels automatically"""
         return await self.redirect(f"https://www.instagram.com/{username}/reels/")
 
     async def close(self):
