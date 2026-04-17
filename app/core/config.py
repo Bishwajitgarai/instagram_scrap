@@ -2,6 +2,11 @@ import os
 from typing import List, Optional
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+
+# Initialize rate limiter with a global limit of 60 requests per minute
+limiter = Limiter(key_func=get_remote_address, default_limits=["60/minute"])
 
 
 class Settings(BaseSettings):

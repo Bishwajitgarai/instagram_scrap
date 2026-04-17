@@ -1,11 +1,13 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
+from app.core.config import limiter
 import time
 from app import scraper
 
 router = APIRouter()
 
 @router.post("/by/username")
-async def user_detials(username: str):
+@limiter.limit("5/minute")
+async def user_detials(username: str, request: Request):
     """Scrape user profile data"""
     try:
         start_time = time.time()

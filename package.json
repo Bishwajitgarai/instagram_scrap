@@ -1,7 +1,0 @@
-{
-  "name": "instagram-scrap",
-  "version": "1.0.0",
-  "scripts": {
-    "vercel-build": "python3 -m pip install . && python3 -m playwright install chromium"
-  }
-}

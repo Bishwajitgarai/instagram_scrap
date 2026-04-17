@@ -20,12 +20,21 @@ async def lifespan(app: FastAPI):
     print("🛑 Shutting down Instagram Scraper...")
     await scraper.close()
 
+from app.core.config import settings, limiter
+from slowapi.errors import RateLimitExceeded
+from slowapi import _rate_limit_exceeded_handler
+
+# Create FastAPI app
 app = FastAPI(
     title="Instagram GraphQL Scraper",
     description="High-performance Instagram GraphQL API scraper with persistent sessions",
     version="1.0.0",
     lifespan=lifespan
 )
+
+# Add limiter to state and register exception handler
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Import routes
 from app.routes.v1.routes import v1_routers

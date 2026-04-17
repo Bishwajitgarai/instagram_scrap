@@ -5,8 +5,8 @@
       "src": "main.py",
       "use": "@vercel/python",
       "config": {
-        "maxDuration": 60,
-        "memory": 1024
+        "maxDuration": 30,
+        "memory": 512
       }
     }
   ],
@@ -17,8 +17,6 @@
     }
   ],
   "env": {
-    "PLAYWRIGHT_BROWSERS_PATH": "./pw-browsers",
-    "HEADLESS": "True",
     "PYTHON_VERSION": "3.12"
   }
 }
