@@ -26,6 +26,33 @@ class InstagramScraper:
             }
         )
 
+    async def import_cookies_from_header(self, cookie_str: str):
+        """
+        Parses a raw cookie string from a request header and applies it to the session.
+        This allows real-time session updates via API headers.
+        """
+        if not cookie_str:
+            return
+        
+        cookies = {}
+        try:
+            parts = cookie_str.split(';')
+            for part in parts:
+                if '=' in part:
+                    name, value = part.strip().split('=', 1)
+                    cookies[name] = value
+            
+            if cookies:
+                self.session.cookies.update(cookies)
+                # Save to file for persistence
+                os.makedirs(self.user_data_dir, exist_ok=True)
+                with open(self.session_file, "w") as f:
+                    json.dump(self.session.cookies.get_dict(), f)
+                print(f"Dynamically imported {len(cookies)} cookies from header")
+                self.is_initialized = True
+        except Exception as e:
+            print(f"Error importing cookies from header: {e}")
+
     async def initialize(self):
         """Initialize session and load existing if available"""
         if self.is_initialized:
@@ -139,11 +166,16 @@ class InstagramScraper:
                 return result
 
             profile_data = resp.json()
+            # Standardize to data.user format if needed
+            if "data" not in profile_data and "user" in profile_data:
+                profile_data = {"data": profile_data}
+
             result["graphql_calls"].append({
                 "url": profile_url,
                 "response_body": profile_data
             })
             result["navigation_success"] = True
+            result["profile_url"] = url
             
             user_id = profile_data.get("data", {}).get("user", {}).get("id")
             if not user_id:
@@ -172,6 +204,15 @@ class InstagramScraper:
                         }
                     }
                 })
+            else:
+                # FAIL-BACK: Extract initial reels from profile_data
+                print("Specialized Reels fetch failed. Using fall-back from profile meta.")
+                initial_reels = profile_data.get("data", {}).get("user", {}).get("edge_felix_video_timeline", {})
+                if initial_reels:
+                    result["graphql_calls"].append({
+                        "url": reels_url + "/fall-back",
+                        "response_body": {"data": {"xdt_api__v1__clips__user__connection_v2": initial_reels}}
+                    })
 
             # 3. Stage 3: Fetch Timeline/Posts
             print(f"Stage 3: Fetching Timeline for user_id {user_id}...")
@@ -190,6 +231,15 @@ class InstagramScraper:
                         }
                     }
                 })
+            else:
+                # FAIL-BACK: Extract initial posts from profile_data
+                print("Specialized Timeline fetch failed. Using fall-back from profile meta.")
+                initial_posts = profile_data.get("data", {}).get("user", {}).get("edge_owner_to_timeline_media", {})
+                if initial_posts:
+                    result["graphql_calls"].append({
+                        "url": reels_url + "/fall-back-timeline",
+                        "response_body": {"data": {"edge_owner_to_timeline_media": initial_posts}}
+                    })
 
             print(f"Virtual Rendering complete. Captured {len(result['graphql_calls'])} GraphQL calls.")
 
@@ -209,6 +259,10 @@ class InstagramScraper:
             headers = {
                 "Content-Type": "application/x-www-form-urlencoded",
                 "X-CSRFToken": self.session.cookies.get("csrftoken") or "",
+                "X-IG-App-ID": "936619743392459",
+                "X-ASBD-ID": "129477",
+                "X-IG-WWW-Claim": "0",
+                "X-Requested-With": "XMLHttpRequest",
             }
             resp = await self.session.post(url, data=data, headers=headers)
             if resp.status_code == 200:
