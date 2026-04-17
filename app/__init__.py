@@ -9,15 +9,15 @@ scraper = InstagramScraper()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("🚀 Starting Instagram Scraper...")
+    print("Starting Instagram Scraper...")
     try:
         await scraper.initialize()
-        print("✅ Instagram Scraper ready!")
+        print("Instagram Scraper ready!")
     except Exception as e:
-        print(f"❌ Failed to initialize scraper: {e}")
-        print("⚠️  API will start but scraper may not be functional")
+        print(f"Failed to initialize scraper: {e}")
+        print("API will start but scraper may not be functional")
     yield
-    print("🛑 Shutting down Instagram Scraper...")
+    print("Shutting down Instagram Scraper...")
     await scraper.close()
 
 from app.core.config import settings, limiter
@@ -39,8 +39,8 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 # Import routes
 from app.routes.v1.routes import v1_routers
 
-# Include routers
-app.include_router(v1_routers, prefix="/api", tags=["v1"])
+# Include routers with versioning
+app.include_router(v1_routers, prefix="/api/v1", tags=["v1"])
 
 @app.get("/")
 async def root():

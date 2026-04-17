@@ -21,7 +21,7 @@ def import_from_cookie_string(cookie_str: str):
                 cookies[name] = value
         
         if not cookies:
-            print("❌ Error: No valid cookies found in that string.")
+            print(" Error: No valid cookies found in that string.")
             return
 
         # Step 2: Save to file
@@ -29,11 +29,11 @@ def import_from_cookie_string(cookie_str: str):
         with open(SESSION_FILE, "w") as f:
             json.dump(cookies, f, indent=4)
         
-        print(f"✅ Successfully imported {len(cookies)} cookies to {SESSION_FILE}")
-        print("🚀 Your scraper is now authorized and ready for Vercel!")
+        print(f" Successfully imported {len(cookies)} cookies to {SESSION_FILE}")
+        print(" Your scraper is now authorized and ready for Vercel!")
 
     except Exception as e:
-        print(f"❌ Error parsing cookies: {e}")
+        print(f" Error parsing cookies: {e}")
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:

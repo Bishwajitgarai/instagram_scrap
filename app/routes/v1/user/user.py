@@ -5,18 +5,12 @@ from app import scraper
 
 router = APIRouter()
 
-@router.post("/by/username")
+@router.post("/by/{username}")
 @limiter.limit("5/minute")
 async def user_detials(username: str, request: Request):
     """Scrape user profile data"""
     try:
         start_time = time.time()
-        
-        # 🟢 Dynamic Cookie Injection
-        cookie_header = request.headers.get("Cookie") or request.headers.get("X-IG-Cookie")
-        if cookie_header:
-            await scraper.import_cookies_from_header(cookie_header)
-
         result = await scraper.redirect( f"https://www.instagram.com/{username}/")
         user_data = {}
         for call in result.get('graphql_calls', []):
@@ -60,7 +54,7 @@ async def user_detials(username: str, request: Request):
             }
         )
 
-@router.post("/full")
+@router.post("/full/{username}")
 @limiter.limit("5/minute")
 async def full_scrape(username: str, request: Request):
     """
@@ -69,12 +63,6 @@ async def full_scrape(username: str, request: Request):
     """
     try:
         start_time = time.time()
-        
-        # 🟢 Dynamic Cookie Injection
-        cookie_header = request.headers.get("Cookie") or request.headers.get("X-IG-Cookie")
-        if cookie_header:
-            await scraper.import_cookies_from_header(cookie_header)
-
         result = await scraper.redirect(f"https://www.instagram.com/{username}/")
         
         # Data Extraction

@@ -9,18 +9,13 @@ from app.core.config import settings
 
 router = APIRouter()
 
-@router.get("/by/username")
+@router.get("/by/{username}")
 async def scrape_user_reels(request: Request, username: str, top_reels_count: Optional[int] = settings.TOP_DEFAULT):
     """
     Scrape user reels with automated fall-back and dynamic cookie support.
     """
     start_time = time.time()
     try:
-        # 🟢 Dynamic Cookie Injection
-        cookie_header = request.headers.get("Cookie") or request.headers.get("X-IG-Cookie")
-        if cookie_header:
-            await scraper.import_cookies_from_header(cookie_header)
-
         # 1. Trigger Virtual Browser Render
         result = await scraper.redirect(f'https://www.instagram.com/{username}/reels/')
 

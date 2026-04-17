@@ -132,16 +132,16 @@ Once the server is running, you can access the interactive API documentation (Sw
 
 ```
 instagram-scrap/
-├── app/
-│   ├── core/           # Configuration and settings
-│   ├── routes/         # API route definitions
-│   │   └── v1/         # Version 1 routes
-│   └── server/         # Server setup
-├── instagram_profile/  # Browser user data (ignored by git)
-├── main.py             # Application entry point
-├── pyproject.toml      # Project dependencies and config
-├── uv.lock             # Dependency lock file
-└── README.md           # Project documentation
+ app/
+    core/           # Configuration and settings
+    routes/         # API route definitions
+       v1/         # Version 1 routes
+    server/         # Server setup
+ instagram_profile/  # Browser user data (ignored by git)
+ main.py             # Application entry point
+ pyproject.toml      # Project dependencies and config
+ uv.lock             # Dependency lock file
+ README.md           # Project documentation
 ```
 
 ## License
